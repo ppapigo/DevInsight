@@ -1,0 +1,60 @@
+server:
+  port: 8080
+  forward-headers-strategy: none
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${COOKIE_SECURE:false}
+  error:
+    include-message: never
+    include-stacktrace: never
+spring:
+  application:
+    name: devinsight
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/devinsight?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
+    username: ${DB_USERNAME:devinsight}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+  mvc:
+    async:
+      request-timeout: 90s
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  admin-github-login: ${ADMIN_GITHUB_LOGIN:}
+  github-client-id: ${GITHUB_CLIENT_ID:}
+  github-client-secret: ${GITHUB_CLIENT_SECRET:}
+  github-token: ${GITHUB_TOKEN:}
+  openai-api-key: ${OPENAI_API_KEY:}
+  openai-model: ${OPENAI_MODEL:gpt-4o-mini}
+  upload-dir: ${UPLOAD_DIR:./data/uploads}
+  max-input-tokens: 18000
+  max-output-tokens: 3500
+  max-source-files: 24
+  max-file-bytes: 48000
+  max-document-chars: 40000
+  interview-per-hour: ${INTERVIEW_PER_HOUR:12}
+  ai-calls-per-day: ${AI_CALLS_PER_DAY:150}
+  jobs-enabled: true
