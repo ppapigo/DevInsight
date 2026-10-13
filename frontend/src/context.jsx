@@ -5,34 +5,23 @@ import {
   useEffect,
   useState,
 } from "react";
-import type { ReactNode } from "react";
-import type { Overview, Session } from "./types";
-import { api, session as getSession } from "./api";
-import { demoOverview } from "./demo";
-const noSession: Session = {
+import { api, session as getSession } from "./api.js";
+import { demoOverview } from "./demo.js";
+const noSession = {
   admin: false,
   oauthEnabled: false,
   aiConfigured: false,
   login: null,
   csrfToken: "",
 };
-type State = {
-  demo: boolean;
-  overview: Overview | null;
-  session: Session;
-  loading: boolean;
-  error: string;
-  refresh: () => Promise<void>;
-  toggleMode: () => void;
-};
-const Context = createContext<State | null>(null);
-export function DataProvider({ children }: { children: ReactNode }) {
+const Context = createContext(null);
+export function DataProvider({ children }) {
   const [demo] = useState(() =>
     localStorage.getItem("devinsight-mode")
       ? localStorage.getItem("devinsight-mode") === "demo"
       : import.meta.env.VITE_DEMO_MODE === "true",
   );
-  const [overview, setOverview] = useState<Overview | null>(null),
+  const [overview, setOverview] = useState(null),
     [session, setSession] = useState(noSession),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
@@ -46,7 +35,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
     try {
       const [o, s] = await Promise.all([
-        api<Overview>("/api/portfolio/overview"),
+        api("/api/portfolio/overview"),
         getSession(),
       ]);
       setOverview(o);

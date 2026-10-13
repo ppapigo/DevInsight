@@ -920,7 +920,8 @@ main {
 .language-dot.java {
   background: #dca96b;
 }
-.language-dot.typescript {
+.language-dot.typescript,
+.language-dot.javascript {
   background: #6dace7;
 }
 .language-dot.python {

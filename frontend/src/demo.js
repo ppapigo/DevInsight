@@ -1,4 +1,3 @@
-import type { Overview, Project, Claim } from "./types";
 const stamp = "2026-10-10T09:00:00Z";
 const definitions = [
   {
@@ -35,8 +34,8 @@ const definitions = [
     id: 2,
     title: "Flowboard",
     description: "팀의 작업 흐름과 실시간 협업을 위한 칸반 워크스페이스.",
-    language: "TypeScript",
-    technologies: ["React", "TypeScript", "WebSocket", "PostgreSQL"],
+    language: "JavaScript",
+    technologies: ["React", "JavaScript", "WebSocket", "PostgreSQL"],
     purpose:
       "팀원이 같은 작업 보드를 보며 상태 변경을 실시간으로 공유하는 협업 도구를 가정한 샘플입니다.",
     claims: [
@@ -44,13 +43,13 @@ const definitions = [
         "FEATURE",
         "실시간 보드 동기화",
         "WebSocket 이벤트를 통해 카드 이동과 작업 상태 변경을 참여자에게 전달하는 예시입니다.",
-        "src/board/BoardService.ts",
+        "src/board/BoardService.js",
       ],
       [
         "ARCHITECTURE",
         "낙관적 UI와 상태 복구",
         "서버 응답 전 화면에 변경을 반영하고, 실패 시 이전 상태로 되돌리는 예시입니다.",
-        "src/hooks/useBoard.ts",
+        "src/hooks/useBoard.js",
       ],
     ],
   },
@@ -77,7 +76,7 @@ const definitions = [
     ],
   },
 ];
-const projects: Project[] = definitions.map((d) => {
+const projects = definitions.map((d) => {
   const evidence = d.claims.map((c, i) => ({
     id: `file-${i + 1}`,
     kind: "CODE",
@@ -86,7 +85,7 @@ const projects: Project[] = definitions.map((d) => {
     text: `// 데모용 코드 근거 예시\n// ${c[1]}\n// 실제 저장소에서 수집한 코드가 아닙니다.`,
     documentId: null,
   }));
-  const claims: Claim[] = d.claims.map((c, i) => ({
+  const claims = d.claims.map((c, i) => ({
     category: c[0],
     title: c[1],
     detail: c[2],
@@ -116,7 +115,7 @@ const projects: Project[] = definitions.map((d) => {
     pushedAt: stamp,
     languages: {
       [d.language]: d.id === 1 ? 56000 : d.id === 2 ? 39000 : 21000,
-      ...(d.id === 1 ? { TypeScript: 24000 } : {}),
+      ...(d.id === 1 ? { JavaScript: 24000 } : {}),
     },
     documents: [],
     analysis: {
@@ -165,7 +164,7 @@ const projects: Project[] = definitions.map((d) => {
     },
   };
 });
-export const demoOverview: Overview = {
+export const demoOverview = {
   profile: {
     login: "demo-developer",
     name: "김도윤",
@@ -175,7 +174,7 @@ export const demoOverview: Overview = {
     publicRepos: 3,
   },
   projects,
-  languages: { Java: 56000, TypeScript: 63000, Python: 21000 },
+  languages: { Java: 56000, JavaScript: 63000, Python: 21000 },
   evidenceCount: 7,
   analyzedProjects: 3,
 };

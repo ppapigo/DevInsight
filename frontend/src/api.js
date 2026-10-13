@@ -1,30 +1,24 @@
-import type { Session } from "./types";
 export class ApiError extends Error {
-  code: string;
-  status: number;
-  constructor(message: string, code: string, status: number) {
+  constructor(message, code, status) {
     super(message);
     this.code = code;
     this.status = status;
   }
 }
 let csrfToken = "";
-export async function session(): Promise<Session> {
-  const s = await api<Session>("/api/auth");
+export async function session() {
+  const s = await api("/api/auth");
   csrfToken = s.csrfToken;
   return s;
 }
-export async function api<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
+export async function api(path, options = {}) {
   const method = options.method ?? "GET";
   if (method !== "GET" && !csrfToken) await session();
   const headers = new Headers(options.headers);
   if (options.body && !(options.body instanceof FormData))
     headers.set("Content-Type", "application/json");
   if (method !== "GET") headers.set("X-XSRF-TOKEN", csrfToken);
-  let res: Response;
+  let res;
   try {
     res = await fetch(path, {
       ...options,
@@ -47,10 +41,10 @@ export async function api<T>(
       res.status,
     );
   }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  if (res.status === 204) return undefined;
+  return res.json();
 }
-export const safeUrl = (url: string) =>
+export const safeUrl = (url) =>
   /^https:\/\//i.test(url) || /^\/api\/documents\/\d+\/content$/.test(url)
     ? url
     : "#";

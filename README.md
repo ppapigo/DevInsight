@@ -10,7 +10,7 @@
 | Build | Gradle **8.14.3** Wrapper, Groovy DSL, 배포 ZIP SHA-256 검증 |
 | Database | MySQL **8.4**, Flyway, 운영 `ddl-auto=validate` |
 | Documents | PDFBox **3.0.8**, Apache POI **5.5.1** |
-| Frontend | React 19, Vite 7, TypeScript 5.9, Tailwind CSS 4, React Router 7, Lucide, Recharts |
+| Frontend | React 19, JavaScript / JSX, Vite 7, Tailwind CSS 4, React Router 7, Lucide, Recharts |
 | Tests | JUnit 5, Mockito, MockMvc, H2 MySQL 모드, Vitest, Testing Library |
 
 프론트엔드의 정확한 버전은 `frontend/package-lock.json`에 고정됩니다. Node.js **24**를 사용합니다. Spring AI 2.0.1은 정식 Maven Central 배포본이며 Snapshot/Milestone 저장소를 사용하지 않습니다. [Spring AI 2.0 정식 릴리스](https://spring.io/blog/2026/06/12/spring-ai-2-0-0-GA-available-now/)는 Spring Boot 4.0/4.1 호환성을 명시합니다. [Spring Boot 요구사항](https://docs.spring.io/spring-boot/system-requirements.html)도 참고하세요.
@@ -158,10 +158,10 @@ portfolio/
 │     ├─ main/resources/db/migration/V1__initial_schema.sql
 │     └─ test/           # 외부 API 모의, API/DB/보안/문서 테스트
 ├─ frontend/src/
-│  ├─ pages/Portfolio.tsx, Interview.tsx, Admin.tsx
-│  ├─ api.ts, context.tsx, types.ts, demo.ts
-│  ├─ components.tsx, ActivityChart.tsx, styles.css
-│  └─ portfolio.test.tsx
+│  ├─ pages/Portfolio.jsx, Interview.jsx, Admin.jsx
+│  ├─ api.js, context.jsx, demo.js
+│  ├─ components.jsx, ActivityChart.jsx, styles.css
+│  └─ portfolio.test.jsx
 ├─ scripts/load-env.ps1, verify-compose.ps1, verify-http.cjs
 ├─ docker-compose.yml, docker-compose.verify.yml, .env.example
 ├─ .github/workflows/ci.yml
@@ -215,7 +215,7 @@ powershell -NoProfile -File scripts\verify-compose.ps1
 
 HTTP 결과는 `work/compose-http-smoke-result.json`, 테스트 보고서는 `backend/build/reports/tests/test/index.html`에 저장합니다. 일반 MySQL 테스트를 직접 실행할 때도 반드시 비어 있는 전용 테스트 DB를 사용하세요.
 
-운영 빌드 산출물: `backend/build/libs/devinsight-0.1.0.jar`, `frontend/dist/`. 프론트엔드 활동 차트는 지연 로딩합니다. `npm run build`는 실제 데이터 모드의 정적 배포본이며 `npm run build:demo`는 샘플 모드 배포본입니다.
+운영 빌드 산출물: `backend/build/libs/devinsight-0.1.0.jar`, `frontend/dist/`. 프론트엔드는 JavaScript와 JSX만 작성하며 TypeScript 컴파일 단계를 사용하지 않습니다. 컴포넌트는 `.jsx`, API/데이터/설정은 `.js`이며 Vite 설정은 `frontend/vite.config.js`입니다. 활동 차트는 지연 로딩합니다. `npm run build`는 실제 데이터 모드의 정적 배포본이며 `npm run build:demo`는 샘플 모드 배포본입니다.
 
 ## 다음 우선순위
 

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -16,10 +15,9 @@ import {
   Search,
   ShieldCheck,
 } from "lucide-react";
-import { useData } from "../context";
-import { api } from "../api";
-import type { Job, Listing, Project, Repo } from "../types";
-import { ErrorState, PageTitle } from "../components";
+import { useData } from "../context.jsx";
+import { api } from "../api.js";
+import { ErrorState, PageTitle } from "../components.jsx";
 export function Admin() {
   const {
       demo,
@@ -29,12 +27,12 @@ export function Admin() {
       error: connectionError,
     } = useData(),
     [username, setUsername] = useState(""),
-    [listing, setListing] = useState<Listing | null>(null),
-    [projects, setProjects] = useState<Project[]>([]),
+    [listing, setListing] = useState(null),
+    [projects, setProjects] = useState([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
-  const load = () => api<Project[]>("/api/admin/projects").then(setProjects);
+  const load = () => api("/api/admin/projects").then(setProjects);
   useEffect(() => {
     if (!demo && session.admin) void load().catch((e) => setError(e.message));
   }, [demo, session.admin]);
@@ -43,17 +41,17 @@ export function Admin() {
     setError("");
     try {
       setListing(
-        await api<Listing>(
+        await api(
           `/api/github/repos?username=${encodeURIComponent(username.trim())}&page=${page}`,
         ),
       );
     } catch (e) {
-      setError((e as Error).message);
+      setError(e.message);
     } finally {
       setBusy(false);
     }
   }
-  async function importRepo(repo: Repo) {
+  async function importRepo(repo) {
     setBusy(true);
     setError("");
     try {
@@ -66,7 +64,7 @@ export function Admin() {
         `${repo.name}을 가져왔습니다. 분석과 공개 설정을 확인해 주세요.`,
       );
     } catch (e) {
-      setError((e as Error).message);
+      setError(e.message);
     } finally {
       setBusy(false);
     }
@@ -286,13 +284,7 @@ export function Admin() {
     </>
   );
 }
-function ProjectEditor({
-  project,
-  onUpdated,
-}: {
-  project: Project;
-  onUpdated: () => Promise<void>;
-}) {
+function ProjectEditor({ project, onUpdated }) {
   const [title, setTitle] = useState(project.title),
     [description, setDescription] = useState(project.description ?? ""),
     [demoUrl, setDemoUrl] = useState(project.demoUrl ?? ""),
@@ -301,12 +293,12 @@ function ProjectEditor({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [job, setJob] = useState<Job | null>(null);
+    [job, setJob] = useState(null);
   useEffect(() => {
     if (!job || ["COMPLETED", "FAILED"].includes(job.status)) return;
     let active = true;
     const timer = setTimeout(() => {
-      api<Job>(`/api/analysis/jobs/${job.id}`)
+      api(`/api/analysis/jobs/${job.id}`)
         .then(async (j) => {
           if (!active) return;
           setJob(j);
@@ -324,7 +316,7 @@ function ProjectEditor({
       clearTimeout(timer);
     };
   }, [job, onUpdated]);
-  async function action(fn: () => Promise<unknown>) {
+  async function action(fn) {
     setBusy(true);
     setError("");
     setNotice("");
@@ -332,12 +324,12 @@ function ProjectEditor({
       await fn();
       await onUpdated();
     } catch (e) {
-      setError((e as Error).message);
+      setError(e.message);
     } finally {
       setBusy(false);
     }
   }
-  async function save(e: FormEvent) {
+  async function save(e) {
     e.preventDefault();
     await action(async () => {
       await api(`/api/projects/${project.id}`, {
@@ -353,7 +345,7 @@ function ProjectEditor({
       setNotice("프로젝트 설정을 저장했습니다.");
     });
   }
-  async function upload(file: File | undefined) {
+  async function upload(file) {
     if (!file) return;
     await action(async () => {
       const data = new FormData();
@@ -453,7 +445,7 @@ function ProjectEditor({
           onClick={() =>
             void action(async () =>
               setJob(
-                await api<Job>(`/api/projects/${project.id}/analyze`, {
+                await api(`/api/projects/${project.id}/analyze`, {
                   method: "POST",
                 }),
               ),
@@ -470,10 +462,9 @@ function ProjectEditor({
           onClick={() =>
             void action(async () =>
               setJob(
-                await api<Job>(
-                  `/api/projects/${project.id}/analyze?force=true`,
-                  { method: "POST" },
-                ),
+                await api(`/api/projects/${project.id}/analyze?force=true`, {
+                  method: "POST",
+                }),
               ),
             )
           }

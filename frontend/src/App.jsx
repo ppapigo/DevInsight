@@ -18,15 +18,15 @@ import {
   Terminal,
   X,
 } from "lucide-react";
-import { DataProvider, useData } from "./context";
+import { DataProvider, useData } from "./context.jsx";
 import {
   Dashboard,
   Projects,
   ProjectDetail,
   ActivityPage,
-} from "./pages/Portfolio";
-import { Interview } from "./pages/Interview";
-import { Admin } from "./pages/Admin";
+} from "./pages/Portfolio.jsx";
+import { Interview } from "./pages/Interview.jsx";
+import { Admin } from "./pages/Admin.jsx";
 export function App() {
   return (
     <DataProvider>
@@ -46,7 +46,7 @@ function Shell() {
     ["/projects", "프로젝트", Boxes],
     ["/activity", "개발 활동", Activity],
     ["/interview", "AI 인터뷰", MessageSquare],
-  ] as const;
+  ];
   const theme = () =>
     setLight((v) => {
       localStorage.setItem("devinsight-theme", v ? "dark" : "light");

@@ -11,11 +11,9 @@ import {
   Sparkles,
   User,
 } from "lucide-react";
-import { useData } from "../context";
-import { api, safeUrl } from "../api";
-import type { Answer } from "../types";
-import { PageTitle, StatusLabel } from "../components";
-type Exchange = { question: string; answer?: Answer; error?: string };
+import { useData } from "../context.jsx";
+import { api, safeUrl } from "../api.js";
+import { PageTitle, StatusLabel } from "../components.jsx";
 export function Interview() {
   const { demo, overview } = useData(),
     [params] = useSearchParams(),
@@ -23,9 +21,9 @@ export function Interview() {
       (p) => p.id === Number(params.get("project")),
     );
   const [question, setQuestion] = useState(""),
-    [exchanges, setExchanges] = useState<Exchange[]>([]),
+    [exchanges, setExchanges] = useState([]),
     [busy, setBusy] = useState(false),
-    end = useRef<HTMLDivElement>(null);
+    end = useRef(null);
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [exchanges, busy]);
@@ -41,14 +39,14 @@ export function Interview() {
         "Docker를 어디에 사용했나요?",
         "직접 구현한 것으로 확인되는 부분은 무엇인가요?",
       ];
-  async function ask(value: string) {
+  async function ask(value) {
     const q = value.trim();
     if (!q || q.length > 1000 || busy) return;
     setBusy(true);
     setQuestion("");
     setExchanges((prev) => [...prev, { question: q }]);
     try {
-      let answer: Answer;
+      let answer;
       if (demo) {
         const project =
           selected ??
@@ -90,7 +88,7 @@ export function Interview() {
           demo: true,
         };
       } else
-        answer = await api<Answer>("/api/interview/ask", {
+        answer = await api("/api/interview/ask", {
           method: "POST",
           body: JSON.stringify({ question: q, projectId: selected?.id }),
         });
@@ -312,6 +310,6 @@ export function Interview() {
     </>
   );
 }
-function CodeBadge({ children }: { children: string }) {
+function CodeBadge({ children }) {
   return <span className="code-badge">{children}</span>;
 }

@@ -7,8 +7,8 @@ import {
   cleanup,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { App } from "./App";
-import { safeUrl } from "./api";
+import { App } from "./App.jsx";
+import { safeUrl } from "./api.js";
 beforeEach(() => {
   cleanup();
   localStorage.clear();

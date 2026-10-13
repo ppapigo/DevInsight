@@ -8,11 +8,7 @@ import {
   Cell,
 } from "recharts";
 const colors = ["#9c8aff", "#5ccab0"];
-export default function ActivityChart({
-  data,
-}: {
-  data: { day: string; count: number }[];
-}) {
+export default function ActivityChart({ data }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data}>

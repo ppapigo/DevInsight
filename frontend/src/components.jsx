@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -13,20 +12,9 @@ import {
   ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
-import type { Project, Status, Evidence } from "./types";
-import { useData } from "./context";
-import { safeUrl } from "./api";
-export function PageTitle({
-  eyebrow,
-  title,
-  description,
-  action,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  action?: ReactNode;
-}) {
+import { useData } from "./context.jsx";
+import { safeUrl } from "./api.js";
+export function PageTitle({ eyebrow, title, description, action }) {
   return (
     <div className="page-title">
       <div>
@@ -46,13 +34,7 @@ export function Loading() {
     </div>
   );
 }
-export function ErrorState({
-  message,
-  retry,
-}: {
-  message: string;
-  retry?: () => void;
-}) {
+export function ErrorState({ message, retry }) {
   return (
     <div className="error-state" role="alert">
       <TriangleAlert size={22} />
@@ -80,7 +62,7 @@ export function EmptyState() {
     </div>
   );
 }
-export function StatusLabel({ status }: { status: Status }) {
+export function StatusLabel({ status }) {
   return (
     <span
       className={`status-label ${status === "CONFIRMED" ? "confirmed" : "uncertain"}`}
@@ -98,7 +80,7 @@ export function StatusLabel({ status }: { status: Status }) {
     </span>
   );
 }
-export function EvidenceLink({ source }: { source: Evidence }) {
+export function EvidenceLink({ source }) {
   const { demo } = useData();
   return demo ? (
     <span className="evidence-link" title="데모용 출처 예시">
@@ -119,7 +101,7 @@ export function EvidenceLink({ source }: { source: Evidence }) {
     </a>
   );
 }
-export function ProjectArt({ project }: { project: Project }) {
+export function ProjectArt({ project }) {
   return (
     <div className={`project-art art-${project.id % 3}`} aria-hidden="true">
       <div className="art-grid" />
@@ -178,7 +160,7 @@ export function ProjectArt({ project }: { project: Project }) {
     </div>
   );
 }
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({ project }) {
   const tech =
     project.analysis?.report.technologies ?? [project.language].filter(Boolean);
   return (
@@ -212,15 +194,7 @@ export function ProjectCard({ project }: { project: Project }) {
     </Link>
   );
 }
-export function SectionHeading({
-  title,
-  caption,
-  link,
-}: {
-  title: string;
-  caption?: string;
-  link?: string;
-}) {
+export function SectionHeading({ title, caption, link }) {
   return (
     <div className="section-heading">
       <div>
@@ -235,7 +209,7 @@ export function SectionHeading({
     </div>
   );
 }
-export function date(value: string) {
+export function date(value) {
   return new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "short",

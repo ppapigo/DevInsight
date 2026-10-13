@@ -20,10 +20,8 @@ import {
   Sparkles,
   Terminal,
 } from "lucide-react";
-
-import { useData } from "../context";
-import { api, safeUrl } from "../api";
-import type { Project } from "../types";
+import { useData } from "../context.jsx";
+import { api, safeUrl } from "../api.js";
 import {
   EmptyState,
   ErrorState,
@@ -34,8 +32,8 @@ import {
   SectionHeading,
   StatusLabel,
   date,
-} from "../components";
-const ActivityChart = lazy(() => import("../ActivityChart"));
+} from "../components.jsx";
+const ActivityChart = lazy(() => import("../ActivityChart.jsx"));
 const colors = ["#9c8aff", "#5ccab0", "#f1c078", "#6baceb", "#e590b7"];
 export function Dashboard() {
   const { overview, loading, error, refresh, demo } = useData();
@@ -156,7 +154,7 @@ export function Dashboard() {
             "개 프로젝트에 분석 연결",
           ],
         ].map(([Icon, label, value, sub]) => {
-          const I = Icon as typeof Blocks;
+          const I = Icon;
           return (
             <div className="stat-card" key={String(label)}>
               <div>
@@ -244,7 +242,7 @@ export function Dashboard() {
     </>
   );
 }
-function LanguageChart({ languages }: { languages: Record<string, number> }) {
+function LanguageChart({ languages }) {
   const entries = Object.entries(languages).sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((a, b) => a + b[1], 0);
   const data = entries.map(([name, value]) => ({
@@ -366,7 +364,7 @@ export function Projects() {
 export function ProjectDetail() {
   const { id } = useParams(),
     { demo, overview } = useData(),
-    [project, setProject] = useState<Project | null>(null),
+    [project, setProject] = useState(null),
     [error, setError] = useState(""),
     [tab, setTab] = useState("분석 개요");
   useEffect(() => {
@@ -378,7 +376,7 @@ export function ProjectDetail() {
       if (p) setProject(p);
       else if (overview) setError("프로젝트를 찾을 수 없습니다.");
     } else
-      api<Project>(`/api/projects/${id}`)
+      api(`/api/projects/${id}`)
         .then((p) => {
           if (alive) setProject(p);
         })
@@ -486,7 +484,7 @@ export function ProjectDetail() {
                     <p>{claim.detail}</p>
                     <div className="evidence-links">
                       {claim.evidenceIds
-                        .map((id) => a!.evidence.find((e) => e.id === id))
+                        .map((id) => a.evidence.find((e) => e.id === id))
                         .filter((e) => !!e)
                         .map((e) => (
                           <EvidenceLink key={e.id} source={e} />
@@ -626,7 +624,7 @@ export function ActivityPage() {
     [overview],
   );
   const data = useMemo(() => {
-    const m = new Map<string, number>();
+    const m = new Map();
     commits.forEach((c) => {
       const day = c.date.slice(0, 10);
       m.set(day, (m.get(day) ?? 0) + 1);

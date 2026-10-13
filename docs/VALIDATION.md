@@ -4,17 +4,36 @@
 
 ## 완료 범위
 
-Java 21 / Spring Boot 4.1.1 / Spring AI 2.0.1 백엔드와 React / TypeScript 프론트엔드를 구현했습니다. 공개 GitHub 수집, 비동기 구조화 분석과 버전 보존, 문서 추출과 공개 승인, 관리자 OAuth 허용 계정 검사, 대시보드와 근거 기반 Q&A가 연결되어 있습니다. 외부 API를 모의 처리한 통합 테스트로 분석 저장·공개 조회·중복 방지·재사용·실패 시 이전 결과 보존을 검증했습니다.
+Java 21 / Spring Boot 4.1.1 / Spring AI 2.0.1 백엔드와 React / JavaScript / JSX 프론트엔드를 구현했습니다. 공개 GitHub 수집, 비동기 구조화 분석과 버전 보존, 문서 추출과 공개 승인, 관리자 OAuth 허용 계정 검사, 대시보드와 근거 기반 Q&A가 연결되어 있습니다. 외부 API를 모의 처리한 통합 테스트로 분석 저장·공개 조회·중복 방지·재사용·실패 시 이전 결과 보존을 검증했습니다.
 
 후속 검증에서 일반 Gradle Wrapper 빌드, 실제 MySQL 8.0.33 및 MySQL 8.4.11 연결, 전체 Docker 스택의 기동과 HTTP 검증을 완료했습니다. 실제 OpenAI 호출과 OAuth 로그인 교환은 인증정보가 없어 미검증입니다. 사용자의 요청에 따라 이번 후속 작업은 외부 인증정보 없이 가능한 검증으로 한정합니다.
 
-## 빌드 및 자동 테스트
+## JavaScript 전환 후 검증
+
+프론트엔드 소스, 테스트, Vite 설정의 13개 모듈을 `.js` / `.jsx`로 전환했습니다. 타입 선언 파일, `tsconfig.json`, TypeScript 컴파일 단계 및 직접 설치한 `typescript`, `@types/react`, `@types/react-dom` 의존성을 제거했습니다. 저장소의 프론트엔드 소스와 설정에는 `.ts` / `.tsx` 파일이 없으며 `npm ls typescript --all`도 빈 결과입니다. 외부 의존성이 제공하는 타입 선언은 프론트엔드 작성 언어와 별개입니다.
+
+2026-10-13 전환 완료 후 아래 항목을 다시 실행했습니다.
+
+| 항목 | 결과 |
+| --- | --- |
+| `npm run build` | 실제 데이터 모드 빌드 성공 |
+| `npm run build:demo -- --outDir ../work/javascript-demo-dist` | 데모 빌드 성공; 실제 데이터 모드 산출물과 별도 보관 |
+| `npm test` | Vitest 4.1.11에서 기존 테스트 4개 통과 |
+| `npm audit --json` | 개발 의존성 포함 취약점 0건 |
+| `docker build --tag devinsight-frontend:javascript-refactor frontend` | Linux 컨테이너의 새 `npm ci` 설치와 프론트엔드 이미지 빌드 성공 |
+| Vite 데모 브라우저 점검 | JavaScript 표기, 대시보드, 활동 차트 지연 로딩 및 페이지 이동 정상; 관찰한 콘솔 오류 0건 |
+
+의존성 정리 과정에서 발견한 개발 도구 취약점을 해소하기 위해 Vitest를 4.1.11로 갱신했습니다. 관련 공지: [Vitest 보안 권고](https://github.com/advisories/GHSA-82fw-gwwq-j7x9).
+
+이 변경은 프론트엔드와 문서에 한정됩니다. 아래 백엔드 25개 테스트, 실제 MySQL 연결 및 전체 Compose HTTP 결과는 전환 전 검증 기록이며, 이번 전환에서 재실행한 범위는 위 표와 같습니다. 로그는 Git에서 제외된 `work/javascript-build.log`, `work/javascript-demo-build.log`, `work/javascript-tests.log`, `work/javascript-docker-build.log`에 있습니다.
+
+## 전체 구현의 빌드 및 자동 테스트 기록
 
 | 항목 | 결과 | 범위 |
 | --- | --- | --- |
 | Gradle Wrapper `build --rerun-tasks --no-daemon` | **일반 설정으로 성공** | 별도 init script 없이 8개 작업 전체 실행, JAR/Boot JAR 생성 |
 | 백엔드 테스트 | **25개 통과**, 실패/오류 0 | MySQL 8.0 및 8.4를 연결한 실행에서 각각 통과; 상세 연결 범위는 아래 참고 |
-| 프론트엔드 `npm run build` | 성공 | TypeScript 검사 + 실제 데이터 모드 배포 빌드 |
+| 프론트엔드 `npm run build` | 성공 | Vite로 JavaScript / JSX 실제 데이터 모드 배포 빌드 |
 | 프론트엔드 `npm run build:demo` | 성공 | 샘플 모드 배포 빌드 |
 | 프론트엔드 `npm test` | **4개 통과** | 데모 표시/필터, 근거 패널, 네트워크 없는 데모 Q&A, 안전한 링크 |
 | `npm audit --omit=dev` | 취약점 0 | 당시 설치된 production 의존성 기준 |
@@ -93,7 +112,7 @@ powershell -NoProfile -File scripts\verify-compose.ps1
 - 활동 차트 지연 로딩 후 렌더링
 - 확인한 브라우저 콘솔 오류 0건
 
-후속 작업에서는 Vite 개발 서버도 15174 포트에서 정상 기동했습니다. 진입 HTML, TypeScript 변환 모듈, Vite 클라이언트가 모두 200으로 응답했고 브라우저에서 데모 React 화면을 렌더링했습니다. 소스 변경에 따른 HMR 갱신 자체는 별도로 시험하지 않았습니다.
+후속 작업에서는 Vite 개발 서버도 15174 포트에서 정상 기동했습니다. 진입 HTML, 프론트엔드 진입 모듈, Vite 클라이언트가 모두 200으로 응답했고 브라우저에서 데모 React 화면을 렌더링했습니다. 소스 변경에 따른 HMR 갱신 자체는 별도로 시험하지 않았습니다.
 
 Docker의 실제 데이터 모드에서는 빈 포트폴리오가 정상 렌더링되고, 관리자 화면에 OAuth 미설정 안내가 표시됐습니다. 이 시점까지 브라우저 콘솔 오류는 0건이었습니다. Q&A의 Docker 예시 질문을 눌러 503 AI_NOT_CONFIGURED에 대응하는 한국어 설정 안내와 재시도 버튼도 확인했습니다. 해당 503은 의도한 설정 누락 응답입니다.
 
