@@ -43,6 +43,12 @@ public class ApiExceptionHandler {
             "파일은 최대 10MB까지 업로드할 수 있습니다."));
   }
 
+  @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+  ResponseEntity<Error> conflict(Exception e) {
+    return api(new ApiException(org.springframework.http.HttpStatus.CONFLICT, "DATA_CONFLICT",
+        "이미 등록되었거나 다른 요청에서 변경된 항목입니다. 목록을 새로고침해 주세요."));
+  }
+
   @ExceptionHandler(Exception.class)
   ResponseEntity<Error> unknown(Exception e) {
     String id = UUID.randomUUID().toString();

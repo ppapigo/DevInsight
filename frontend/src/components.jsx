@@ -13,7 +13,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useData } from "./context.jsx";
-import { safeUrl } from "./api.js";
+import { projectRepositories, safeUrl } from "./api.js";
 export function PageTitle({ eyebrow, title, description, action }) {
   return (
     <div className="page-title">
@@ -183,6 +183,7 @@ export function ProjectCard({ project }) {
               className={`language-dot ${project.language?.toLowerCase()}`}
             />
             {project.language || "언어 미확인"}
+            {projectRepositories(project).length > 1 && ` · 저장소 ${projectRepositories(project).length}개`}
           </span>
           <span>
             <FileCode2 size={13} />

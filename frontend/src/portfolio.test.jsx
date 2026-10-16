@@ -49,6 +49,8 @@ describe("portfolio visitor journeys", () => {
         selector: "summary span",
       }),
     ).toBeInTheDocument();
+    expect(screen.getAllByText("코드", { selector: ".subtle-badge" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText("CODE", { selector: ".subtle-badge" })).not.toBeInTheDocument();
   });
   it("answers in demo without invoking GPT", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");

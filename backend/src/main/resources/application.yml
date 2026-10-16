@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8083
   forward-headers-strategy: none
   servlet:
     session:
@@ -15,7 +15,7 @@ spring:
   application:
     name: devinsight
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/devinsight?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
+    url: ${DB_URL:jdbc:mysql://localhost:3308/devinsight?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
     username: ${DB_USERNAME:devinsight}
     password: ${DB_PASSWORD:}
   jpa:

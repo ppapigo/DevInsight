@@ -48,3 +48,6 @@ export const safeUrl = (url) =>
   /^https:\/\//i.test(url) || /^\/api\/documents\/\d+\/content$/.test(url)
     ? url
     : "#";
+
+export const projectRepositories = (project) =>
+  project.repositories ?? [{ fullName: project.repository, githubUrl: project.githubUrl, language: project.language }];

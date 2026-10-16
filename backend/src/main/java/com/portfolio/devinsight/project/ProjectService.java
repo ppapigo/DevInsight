@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProjectService {
+  public record RepositoryView(
+      Long id, String fullName, String githubUrl, String language, int stars, boolean fork) {}
+
   public record AnalysisView(
       Long id,
       String commitSha,
@@ -47,7 +50,8 @@ public class ProjectService {
       Instant pushedAt,
       Map<String, Long> languages,
       AnalysisView analysis,
-      List<DocumentView> documents) {}
+      List<DocumentView> documents,
+      List<RepositoryView> repositories) {}
 
   private final ProjectRepository projects;
   private final GitHubRepositoryStore repos;
@@ -79,17 +83,70 @@ public class ProjectService {
     var repo = github.importRepo(owner, name);
     var p =
         projects
-            .findByRepositoryId(repo.getId())
+            .findByLinkedRepositoryId(repo.getId())
             .orElseGet(
                 () -> {
                   var n = new Project();
                   n.setRepositoryId(repo.getId());
+                  n.getRepositoryIds().add(repo.getId());
                   n.setTitle(name);
                   n.setDescription(repo.getDescription());
                   n.setCreatedAt(Instant.now());
                   return n;
                 });
     return view(projects.save(p), true);
+  }
+
+  @Transactional
+  public View create(String title, List<ProjectController.ImportRequest> requests) {
+    var imported = importRepositories(requests);
+    for (var repo : imported) requireAvailable(repo, null);
+    var p = new Project();
+    p.setRepositoryId(imported.getFirst().getId());
+    imported.forEach(r -> p.getRepositoryIds().add(r.getId()));
+    p.setTitle(title.trim());
+    p.setDescription(imported.getFirst().getDescription());
+    p.setCreatedAt(Instant.now());
+    return view(projects.save(p), true);
+  }
+
+  @Transactional
+  public View addRepositories(Long id, List<ProjectController.ImportRequest> requests) {
+    var p = projects.lockById(id).orElseThrow(ApiException::notFound);
+    var imported = importRepositories(requests);
+    for (var repo : imported) requireAvailable(repo, id);
+    var ids = new LinkedHashSet<>(p.getRepositoryIds());
+    imported.forEach(r -> ids.add(r.getId()));
+    if (ids.size() > 10) throw ApiException.badRequest("프로젝트에는 저장소를 최대 10개 연결할 수 있습니다.");
+    if (!ids.equals(p.getRepositoryIds())) {
+      p.getRepositoryIds().addAll(ids);
+      p.setDocumentRevision(p.getDocumentRevision() + 1);
+      p.setLatestAnalysisId(null);
+    }
+    return view(projects.save(p), true);
+  }
+
+  private List<GitHubRepository> importRepositories(List<ProjectController.ImportRequest> requests) {
+    if (requests == null || requests.isEmpty() || requests.size() > 10)
+      throw ApiException.badRequest("저장소는 1~10개 선택해 주세요.");
+    Map<Long, GitHubRepository> imported = new LinkedHashMap<>();
+    for (var request : requests) {
+      var repo = github.importRepo(request.owner(), request.name());
+      imported.put(repo.getId(), repo);
+    }
+    return List.copyOf(imported.values());
+  }
+
+  private void requireAvailable(GitHubRepository repo, Long projectId) {
+    projects.findByLinkedRepositoryId(repo.getId())
+        .ifPresent(
+            existing -> {
+              if (!existing.getId().equals(projectId))
+                throw new ApiException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "REPOSITORY_IN_USE",
+                    repo.getFullName() + "은 이미 다른 프로젝트에 등록되어 있습니다.");
+            });
   }
 
   public Project accessible(Long id, boolean admin) {
@@ -140,6 +197,10 @@ public class ProjectService {
 
   public View view(Project p, boolean admin) {
     var r = repos.findById(p.getRepositoryId()).orElseThrow(ApiException::notFound);
+    var connected = new ArrayList<>(repos.findAllById(p.getRepositoryIds()));
+    connected.sort(
+        Comparator.comparing((GitHubRepository repo) -> !repo.getId().equals(p.getRepositoryId()))
+            .thenComparing(GitHubRepository::getId));
     AnalysisView a = null;
     if (p.getLatestAnalysisId() != null) {
       var n = analyses.findById(p.getLatestAnalysisId()).orElseThrow(ApiException::notFound);
@@ -170,10 +231,12 @@ public class ProjectService {
             .map(ProjectService::documentView)
             .toList();
     Map<String, Long> languages = new LinkedHashMap<>();
-    if (r.getLanguagesJson() != null)
-      json.tree(r.getLanguagesJson())
+    for (var repo : connected) {
+      if (repo.getLanguagesJson() == null) continue;
+      json.tree(repo.getLanguagesJson())
           .properties()
-          .forEach(e -> languages.put(e.getKey(), e.getValue().asLong()));
+          .forEach(e -> languages.merge(e.getKey(), e.getValue().asLong(), Long::sum));
+    }
     return new View(
         p.getId(),
         p.getTitle(),
@@ -184,13 +247,21 @@ public class ProjectService {
         r.getFullName(),
         r.getHtmlUrl(),
         r.getLanguage(),
-        r.getStars(),
+        connected.stream().mapToInt(GitHubRepository::getStars).sum(),
         r.isFork(),
         r.getCreatedAt(),
-        r.getPushedAt(),
+        connected.stream()
+            .map(GitHubRepository::getPushedAt)
+            .filter(Objects::nonNull)
+            .max(Comparator.naturalOrder())
+            .orElse(null),
         languages,
         a,
-        docs);
+        docs,
+        connected.stream()
+            .map(repo -> new RepositoryView(repo.getId(), repo.getFullName(),
+                repo.getHtmlUrl(), repo.getLanguage(), repo.getStars(), repo.isFork()))
+            .toList());
   }
 
   public static DocumentView documentView(ProjectDocument d) {

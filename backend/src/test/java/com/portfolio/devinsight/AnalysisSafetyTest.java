@@ -83,4 +83,34 @@ class AnalysisSafetyTest {
     assertThatThrownBy(() -> limiter.interview("127.0.0.1")).isInstanceOf(ApiException.class);
     limiter.interview("127.0.0.2");
   }
+
+  @Test
+  void koreanReportAllowsTechnicalNamesButChecksEveryProseField() {
+    var fields = new ArrayList<>(List.of(
+        "Spring Boot 인증 서비스입니다.", "JWT로 사용자 인증을 처리합니다.", "JWT 기반 인증",
+        "SecurityConfig.java에서 CSRF 보호를 설정합니다.", "JWT 만료는 어떻게 처리하나요?",
+        "개인 기여 범위는 추가 확인이 필요합니다."));
+    var korean = localizedReport(fields);
+    assertThat(AnalysisPrompts.isKoreanReport(korean)).isTrue();
+    assertThatCode(() -> AnalysisPrompts.requireKoreanReport(korean)).doesNotThrowAnyException();
+    assertThat(korean.technologies()).containsExactly("Spring Boot", "JWT");
+    assertThat(korean.claims().getFirst().evidenceIds()).containsExactly("repo-1-file-1");
+    for (int i = 0; i < fields.size(); i++) {
+      var mixed = new ArrayList<>(fields);
+      mixed.set(i, "An English-only explanation");
+      var report = localizedReport(mixed);
+      assertThat(AnalysisPrompts.isKoreanReport(report)).as("prose field %s", i).isFalse();
+      assertThatThrownBy(() -> AnalysisPrompts.requireKoreanReport(report))
+          .isInstanceOf(ApiException.class)
+          .extracting(e -> ((ApiException) e).getCode())
+          .isEqualTo("AI_RESPONSE_LANGUAGE");
+    }
+  }
+
+  private ProjectReport localizedReport(List<String> fields) {
+    return new ProjectReport(fields.get(0), fields.get(1), List.of("Spring Boot", "JWT"),
+        List.of(new ProjectReport.Claim(ProjectReport.Category.FEATURE, fields.get(2), fields.get(3),
+            ProjectReport.Status.CONFIRMED, List.of("repo-1-file-1"))),
+        List.of(fields.get(4)), List.of(fields.get(5)));
+  }
 }

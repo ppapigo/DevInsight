@@ -2,22 +2,24 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
   FileUp,
   Github,
   LoaderCircle,
   Lock,
   Play,
-  Plus,
   RefreshCw,
-  Search,
   ShieldCheck,
 } from "lucide-react";
 import { useData } from "../context.jsx";
-import { api } from "../api.js";
+import { api, projectRepositories, safeUrl } from "../api.js";
+import { RepositoryImporter } from "../RepositoryImporter.jsx";
 import { ErrorState, PageTitle } from "../components.jsx";
+const jobStatusLabels = {
+  PENDING: "분석 대기",
+  RUNNING: "분석 중",
+  COMPLETED: "분석 완료",
+  FAILED: "분석 실패",
+};
 export function Admin() {
   const {
       demo,
@@ -26,49 +28,15 @@ export function Admin() {
       refresh,
       error: connectionError,
     } = useData(),
-    [username, setUsername] = useState(""),
-    [listing, setListing] = useState(null),
     [projects, setProjects] = useState([]),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
-    [notice, setNotice] = useState("");
-  const load = () => api("/api/admin/projects").then(setProjects);
+    [error, setError] = useState("");
+  const load = () => api("/api/admin/projects").then(data => {
+    setProjects(data);
+    setError("");
+  });
   useEffect(() => {
     if (!demo && session.admin) void load().catch((e) => setError(e.message));
   }, [demo, session.admin]);
-  async function search(page = 1) {
-    setBusy(true);
-    setError("");
-    try {
-      setListing(
-        await api(
-          `/api/github/repos?username=${encodeURIComponent(username.trim())}&page=${page}`,
-        ),
-      );
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function importRepo(repo) {
-    setBusy(true);
-    setError("");
-    try {
-      await api("/api/projects/import", {
-        method: "POST",
-        body: JSON.stringify({ owner: repo.owner, name: repo.name }),
-      });
-      await load();
-      setNotice(
-        `${repo.name}을 가져왔습니다. 분석과 공개 설정을 확인해 주세요.`,
-      );
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
   const reload = async () => {
     await load();
     await refresh();
@@ -143,115 +111,7 @@ export function Admin() {
       ) : (
         <>
           {error && <ErrorState message={error} />}{" "}
-          {notice && (
-            <p className="notice" role="status">
-              <Check size={16} />
-              {notice}
-            </p>
-          )}
-          <section className="panel">
-            <div className="section-heading">
-              <div>
-                <h2>GitHub 저장소 가져오기</h2>
-                <p>
-                  공개 저장소만 지원합니다. 가져온 프로젝트는 기본적으로
-                  비공개입니다.
-                </p>
-              </div>
-              <Github size={24} />
-            </div>
-            <form
-              className="import-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void search();
-              }}
-            >
-              <label className="search-input">
-                <Search size={17} />
-                <input
-                  placeholder="GitHub 사용자명"
-                  aria-label="GitHub 사용자명"
-                  required
-                  maxLength={39}
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </label>
-              <button
-                className="button primary"
-                disabled={busy || !username.trim()}
-              >
-                {busy ? (
-                  <LoaderCircle className="spin" size={16} />
-                ) : (
-                  <Search size={16} />
-                )}{" "}
-                저장소 조회
-              </button>
-            </form>
-            {listing && (
-              <>
-                <div className="repo-heading">
-                  <span>
-                    {listing.profile.name}{" "}
-                    <small>@{listing.profile.login}</small>
-                  </span>
-                  <span>{listing.profile.publicRepos} public repositories</span>
-                </div>
-                <div className="repo-list">
-                  {listing.repositories.map((r) => (
-                    <div className="repo-row" key={r.githubId}>
-                      <Github size={17} />
-                      <div>
-                        <strong>
-                          {r.name}
-                          {r.fork && <span className="subtle-badge">FORK</span>}
-                        </strong>
-                        <p>{r.description || "설명이 없는 저장소"}</p>
-                        <small>{r.language || "언어 미확인"}</small>
-                      </div>
-                      <button
-                        className="button small"
-                        disabled={
-                          busy ||
-                          projects.some((p) => p.repository === r.fullName)
-                        }
-                        onClick={() => void importRepo(r)}
-                      >
-                        {projects.some((p) => p.repository === r.fullName) ? (
-                          <>
-                            <Check size={14} /> 등록됨
-                          </>
-                        ) : (
-                          <>
-                            <Plus size={14} /> 가져오기
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div className="pagination">
-                  <button
-                    className="button small"
-                    disabled={busy || listing.page <= 1}
-                    onClick={() => void search(listing.page - 1)}
-                  >
-                    <ChevronLeft size={14} /> 이전
-                  </button>
-                  <span>{listing.page} 페이지</span>
-                  <button
-                    className="button small"
-                    disabled={busy || !listing.hasMore}
-                    onClick={() => void search(listing.page + 1)}
-                  >
-                    다음 <ChevronRight size={14} />
-                  </button>
-                </div>
-              </>
-            )}
-          </section>
+          <RepositoryImporter projects={projects} onUpdated={reload} />
           <div className="section-heading">
             <div>
               <h2>등록한 프로젝트</h2>
@@ -260,7 +120,7 @@ export function Admin() {
             <button
               className="icon-button"
               aria-label="프로젝트 새로고침"
-              onClick={() => void load()}
+              onClick={() => void load().catch(e => setError(e.message))}
             >
               <RefreshCw size={17} />
             </button>
@@ -276,7 +136,7 @@ export function Admin() {
           {projects.length === 0 && (
             <div className="empty-state">
               <Github />
-              <p>위에서 첫 공개 저장소를 가져와 주세요.</p>
+              <p>위에서 저장소를 선택하고 첫 프로젝트를 등록해 주세요.</p>
             </div>
           )}
         </>
@@ -345,25 +205,30 @@ function ProjectEditor({ project, onUpdated }) {
       setNotice("프로젝트 설정을 저장했습니다.");
     });
   }
-  async function upload(file) {
-    if (!file) return;
+  async function upload(files) {
+    if (!files.length) return;
     await action(async () => {
-      const data = new FormData();
-      data.append("file", file);
-      await api(`/api/projects/${project.id}/documents`, {
-        method: "POST",
-        body: data,
-      });
-      setNotice(
-        "파일을 비공개로 저장했습니다. 공개 승인을 선택하면 다음 분석에 포함됩니다.",
-      );
+      let completed = 0;
+      const failures = [];
+      for (const file of files) {
+        try {
+          const data = new FormData();
+          data.append("file", file);
+          await api(`/api/projects/${project.id}/documents`, { method: "POST", body: data });
+          completed++;
+        } catch (e) {
+          failures.push(`${file.name}: ${e.message}`);
+        }
+      }
+      setNotice(`${completed}개 파일을 비공개로 저장했습니다. 공개 승인 후 다음 분석에 포함됩니다.`);
+      if (failures.length) setError(failures.join("\n"));
     });
   }
   return (
     <section className="panel project-editor">
       <div className="section-heading">
         <div>
-          <h3>{project.repository}</h3>
+          <h3>{project.title}</h3>
           <p>
             {project.published
               ? "공개 포트폴리오에 표시 중"
@@ -373,6 +238,13 @@ function ProjectEditor({ project, onUpdated }) {
         <Link to={`/projects/${project.id}`} className="button small">
           상세 보기 <ArrowUpRight size={13} />
         </Link>
+      </div>
+      <div className="connected-repositories">
+        <strong>연결된 GitHub 저장소 {projectRepositories(project).length}개</strong>
+        {projectRepositories(project).map(repo => <a key={repo.fullName} href={safeUrl(repo.githubUrl)} target="_blank" rel="noreferrer">
+          <Github size={14} /> {repo.fullName} <ArrowUpRight size={13} />
+        </a>)}
+        <small className="muted">위 등록 영역에서 ‘기존 프로젝트에 저장소 추가’를 선택해 더 연결할 수 있습니다.</small>
       </div>
       <form onSubmit={(e) => void save(e)}>
         <div className="editor-fields">
@@ -433,7 +305,7 @@ function ProjectEditor({ project, onUpdated }) {
           </strong>
           <p>
             {project.analysis
-              ? `커밋 ${project.analysis.commitSha.slice(0, 7)} · ${project.analysis.model}`
+              ? `${projectRepositories(project).length > 1 ? "분석 ID" : "커밋"} ${project.analysis.commitSha.slice(0, 7)} · ${project.analysis.model}`
               : "핵심 코드와 승인된 문서를 수집해 분석합니다."}
           </p>
         </div>
@@ -477,14 +349,14 @@ function ProjectEditor({ project, onUpdated }) {
           {["PENDING", "RUNNING"].includes(job.status) && (
             <LoaderCircle size={15} className="spin" />
           )}
-          <strong>{job.status}</strong> {job.message}
+          <strong>{jobStatusLabels[job.status] ?? "상태 확인 중"}</strong> {job.message}
         </div>
       )}
       <div className="document-admin">
         <div className="section-heading">
           <div>
             <h4>프로젝트 자료</h4>
-            <p>최대 10MB · PDF, DOCX, PPTX, TXT, MD, PNG, JPEG</p>
+            <p>여러 파일 선택 가능 · 파일당 최대 10MB · 프로젝트당 30개 · PDF, DOCX, PPTX, TXT, MD, PNG, JPEG</p>
           </div>
           <label
             className={`button small upload-label ${busy ? "disabled" : ""}`}
@@ -492,10 +364,12 @@ function ProjectEditor({ project, onUpdated }) {
             <FileUp size={15} /> 자료 업로드
             <input
               type="file"
+              multiple
+              aria-label={`${project.title} 자료 업로드`}
               disabled={busy}
               accept=".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg"
               onChange={(e) => {
-                void upload(e.target.files?.[0]);
+                void upload(Array.from(e.target.files ?? []));
                 e.target.value = "";
               }}
             />
@@ -540,7 +414,7 @@ function ProjectEditor({ project, onUpdated }) {
         </p>
       )}
       {error && (
-        <p className="inline-error" role="alert">
+        <p className="inline-error import-errors" role="alert">
           {error}
         </p>
       )}

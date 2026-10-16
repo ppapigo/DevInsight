@@ -83,7 +83,7 @@ public class AnalysisTransactions {
     var project = projects.lockById(job.getProjectId()).orElseThrow(ApiException::notFound);
     if (project.getDocumentRevision() != documentRevision)
       throw new ApiException(
-          HttpStatus.CONFLICT, "DOCUMENTS_CHANGED", "분석 중 자료의 공개 설정이 변경되었습니다. 다시 분석해 주세요.");
+          HttpStatus.CONFLICT, "DOCUMENTS_CHANGED", "분석 중 연결된 저장소 또는 자료의 공개 설정이 변경되었습니다. 다시 분석해 주세요.");
     var analysis = new ProjectAnalysis();
     analysis.setProjectId(project.getId());
     analysis.setCommitSha(snapshot.sha());
@@ -111,9 +111,14 @@ public class AnalysisTransactions {
   }
 
   @Transactional
-  public void unchanged(Long id, String sha) {
+  public void unchanged(Long id, String sha, long revision) {
+    var job = jobs.findById(id).orElseThrow(ApiException::notFound);
+    var project = projects.lockById(job.getProjectId()).orElseThrow(ApiException::notFound);
+    if (project.getDocumentRevision() != revision || project.getLatestAnalysisId() == null)
+      throw new ApiException(HttpStatus.CONFLICT, "DOCUMENTS_CHANGED",
+          "분석 중 연결된 저장소 또는 자료가 변경되었습니다. 다시 분석해 주세요.");
     finish(
-        jobs.findById(id).orElseThrow(ApiException::notFound),
+        job,
         JobStatus.COMPLETED,
         null,
         "커밋과 승인된 자료가 동일하여 기존 분석을 재사용했습니다.",

@@ -14,6 +14,13 @@ public class ProjectController {
   public record ImportRequest(
       @NotBlank @Size(max = 39) String owner, @NotBlank @Size(max = 100) String name) {}
 
+  public record CreateRequest(
+      @NotBlank @Size(max = 255) String title,
+      @NotEmpty @Size(max = 10) List<@NotNull @Valid ImportRequest> repositories) {}
+
+  public record RepositoriesRequest(
+      @NotEmpty @Size(max = 10) List<@NotNull @Valid ImportRequest> repositories) {}
+
   public record UpdateRequest(
       @NotBlank @Size(max = 255) String title,
       @Size(max = 3000) String description,
@@ -35,6 +42,17 @@ public class ProjectController {
   @GetMapping("/projects")
   List<ProjectService.View> list() {
     return service.list(false);
+  }
+
+  @PostMapping("/projects")
+  ResponseEntity<ProjectService.View> create(@Valid @RequestBody CreateRequest request) {
+    return ResponseEntity.status(201).body(service.create(request.title(), request.repositories()));
+  }
+
+  @PostMapping("/projects/{id}/repositories")
+  ProjectService.View addRepositories(
+      @PathVariable Long id, @Valid @RequestBody RepositoriesRequest request) {
+    return service.addRepositories(id, request.repositories());
   }
 
   @GetMapping("/admin/projects")

@@ -21,7 +21,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { useData } from "../context.jsx";
-import { api, safeUrl } from "../api.js";
+import { api, projectRepositories, safeUrl } from "../api.js";
 import {
   EmptyState,
   ErrorState,
@@ -35,6 +35,13 @@ import {
 } from "../components.jsx";
 const ActivityChart = lazy(() => import("../ActivityChart.jsx"));
 const colors = ["#9c8aff", "#5ccab0", "#f1c078", "#6baceb", "#e590b7"];
+const sourceKindLabels = {
+  CODE: "코드",
+  TREE: "폴더 구조",
+  DOCUMENT: "문서",
+  COMMIT: "커밋",
+  PULL_REQUEST: "변경 요청",
+};
 export function Dashboard() {
   const { overview, loading, error, refresh, demo } = useData();
   if (loading) return <Loading />;
@@ -299,6 +306,8 @@ export function Projects() {
         " " +
         p.description +
         " " +
+        projectRepositories(p).map(r => r.fullName).join(" ") +
+        " " +
         p.analysis?.report.technologies.join(" ")
       )
         .toLowerCase()
@@ -397,21 +406,22 @@ export function ProjectDetail() {
         <ArrowLeft size={14} /> 프로젝트 목록
       </Link>
       <PageTitle
-        eyebrow="PROJECT DEEP DIVE"
+        eyebrow="프로젝트 상세 분석"
         title={project.title}
         description={project.description}
         action={
           <div className="title-actions">
-            {!demo && (
+            {!demo && projectRepositories(project).map(repo => (
               <a
+                key={repo.fullName}
                 className="button"
-                href={safeUrl(project.githubUrl)}
+                href={safeUrl(repo.githubUrl)}
                 target="_blank"
                 rel="noreferrer"
               >
-                <Github size={16} /> 저장소 <ArrowUpRight size={14} />
+                <Github size={16} /> {repo.fullName} <ArrowUpRight size={14} />
               </a>
-            )}
+            ))}
             {project.demoUrl && (
               <a
                 className="button primary"
@@ -433,7 +443,7 @@ export function ProjectDetail() {
         </div>
         <span>
           <GitBranch size={14} />
-          {a ? (demo ? "샘플 커밋" : a.commitSha.slice(0, 7)) : "분석 대기"}
+          {a ? (demo ? "샘플 커밋" : `${projectRepositories(project).length > 1 ? "분석 ID " : ""}${a.commitSha.slice(0, 7)}`) : "분석 대기"}
         </span>
         {a && (
           <span>
@@ -469,7 +479,7 @@ export function ProjectDetail() {
               <section className="panel overview-panel">
                 <div className="eyebrow">
                   <Sparkles size={14} />{" "}
-                  {demo ? "SAMPLE ANALYSIS" : "AI ANALYSIS"}
+                  {demo ? "샘플 분석" : "AI 분석"}
                 </div>
                 <h2>{report.summary}</h2>
                 <p>{report.purpose}</p>
@@ -531,7 +541,7 @@ export function ProjectDetail() {
                 <summary>
                   <FileCode2 size={18} />
                   <span>{e.path}</span>
-                  <span className="subtle-badge">{e.kind}</span>
+                  <span className="subtle-badge">{sourceKindLabels[e.kind] ?? "기타 근거"}</span>
                   <ChevronRight size={16} />
                 </summary>
                 <pre>
@@ -549,10 +559,10 @@ export function ProjectDetail() {
         <section className="panel">
           <SectionHeading
             title="최근 커밋"
-            caption="최근 최대 30건의 표본입니다. 전체 활동이나 개인 기여도로 해석하지 않습니다."
+            caption="저장소별 최근 최대 30건의 표본입니다. 전체 활동이나 개인 기여도로 해석하지 않습니다."
           />
           {a?.activity.commits.map((c) => (
-            <div className="commit-row" key={c.sha}>
+            <div className="commit-row" key={`${c.url}-${c.sha}`}>
               <GitCommitHorizontal size={20} />
               <div>
                 <strong>{c.message.split("\n")[0]}</strong>
@@ -670,7 +680,7 @@ export function ActivityPage() {
           caption={`${commits.length}개의 수집된 커밋`}
         />
         {commits.slice(0, 40).map((c) => (
-          <div className="commit-row" key={`${c.projectId}-${c.sha}`}>
+          <div className="commit-row" key={`${c.projectId}-${c.url}-${c.sha}`}>
             <GitCommitHorizontal size={19} />
             <div>
               <Link to={`/projects/${c.projectId}`}>{c.project}</Link>

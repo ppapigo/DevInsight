@@ -2,6 +2,8 @@ package com.portfolio.devinsight.project;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +19,11 @@ public class Project {
   @Column(nullable = false, unique = true)
   private Long repositoryId;
 
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "project_repository", joinColumns = @JoinColumn(name = "project_id"))
+  @Column(name = "repository_id", nullable = false, unique = true)
+  private Set<Long> repositoryIds = new LinkedHashSet<>();
+
   @Column(nullable = false)
   private String title;
 
@@ -30,6 +37,7 @@ public class Project {
   private String demoUrl;
 
   private Long latestAnalysisId;
+  // Revision of analysis inputs: approved documents and connected repositories.
   private long documentRevision;
   private Instant createdAt;
 }

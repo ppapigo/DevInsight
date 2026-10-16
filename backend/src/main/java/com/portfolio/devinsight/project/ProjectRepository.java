@@ -9,6 +9,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
   java.util.Optional<Project> findByRepositoryId(Long repositoryId);
 
+  @org.springframework.data.jpa.repository.Query(
+      "select p from Project p join p.repositoryIds r where r = :repositoryId")
+  java.util.Optional<Project> findByLinkedRepositoryId(
+      @org.springframework.data.repository.query.Param("repositoryId") Long repositoryId);
+
   @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
   @org.springframework.data.jpa.repository.Query("select p from Project p where p.id = :id")
   java.util.Optional<Project> lockById(
