@@ -39,7 +39,7 @@ function Shell() {
     location = useLocation();
   const [open, setOpen] = useState(false),
     [light, setLight] = useState(
-      () => localStorage.getItem("devinsight-theme") === "light",
+      () => localStorage.getItem("devinsight-theme") !== "dark",
     );
   const nav = [
     ["/", "개요", LayoutDashboard],

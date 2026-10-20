@@ -6,7 +6,7 @@ const definitions = [
     description:
       "코드와 개발 이력을 근거로, 개발자의 경험을 읽는 AI 포트폴리오 플랫폼.",
     language: "Java",
-    technologies: ["Spring Boot", "Spring AI", "React", "MySQL"],
+    technologies: ["Spring Boot", "Spring AI", "MySQL"],
     purpose:
       "면접관이 저장소를 일일이 탐색하지 않고도 개발자의 구현 경험과 코드 근거를 확인하는 서비스입니다.",
     claims: [
@@ -35,7 +35,7 @@ const definitions = [
     title: "Flowboard",
     description: "팀의 작업 흐름과 실시간 협업을 위한 칸반 워크스페이스.",
     language: "JavaScript",
-    technologies: ["React", "JavaScript", "WebSocket", "PostgreSQL"],
+    technologies: ["JavaScript", "WebSocket", "PostgreSQL"],
     purpose:
       "팀원이 같은 작업 보드를 보며 상태 변경을 실시간으로 공유하는 협업 도구를 가정한 샘플입니다.",
     claims: [
@@ -167,7 +167,7 @@ const projects = definitions.map((d) => {
 export const demoOverview = {
   profile: {
     login: "demo-developer",
-    name: "김도윤",
+    name: "양재성",
     bio: "사용자의 문제를 이해하고, 안정적인 서비스로 해결하는 백엔드 개발자입니다.",
     avatarUrl: "",
     githubUrl: "https://github.com",

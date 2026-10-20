@@ -34,7 +34,13 @@ import {
   date,
 } from "../components.jsx";
 const ActivityChart = lazy(() => import("../ActivityChart.jsx"));
-const colors = ["#9c8aff", "#5ccab0", "#f1c078", "#6baceb", "#e590b7"];
+const colors = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+];
 const sourceKindLabels = {
   CODE: "코드",
   TREE: "폴더 구조",
